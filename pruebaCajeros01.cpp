@@ -17,61 +17,51 @@ typedef struct Cliente{
 };
 
 int _tmain(){
+	//semilla
 	srand(time(0)); 
-	int tiempoCompra;
-	tiempoCompra = rand()/100;
-	printf("%d\n", tiempoCompra);
-	tiempoCompra = rand()/100;
-	printf("%d\n", tiempoCompra);
-	tiempoCompra = rand()/100;
-	printf("%d\n", tiempoCompra);
-	tiempoCompra = rand()/100;
-	printf("%d\n", tiempoCompra);
-	//printf("iniciado metodo principal\n");
-	printf("hola\n");
 	
-	
-	
-    Cliente clientes[N_CLIENTES];
+    Cliente *clientes[N_CLIENTES];
     DWORD   dwHilos[N_CLIENTES];
     HANDLE  hilos[N_CLIENTES]; 
 //CREACION DE THREADS
-    for( int i=0; i< N_CLIENTES; i++ )
-    {
+    for( int i=0; i< N_CLIENTES; i++ ){
     
-        pDataArray[i] = (PMYDATA) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MYDATA));
+        clientes[i] = (Cliente*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Cliente));
 
-        if( pDataArray[i] == NULL )
+        if( clientes[i] == NULL )
         {
             ExitProcess(2);
         }
 
-        pDataArray[i]->val1 = i;
-        pDataArray[i]->val2 = i+100;
+		clientes[i]->id = i;
+		clientes[i]->estado = COMPRANDO;
+		clientes[i]->tAtencion = rand()/100;
+		clientes[i]->tCompra = rand()/100;
+        
 
-        hThreadArray[i] = CreateThread( 
+        hilos[i] = CreateThread( 
             NULL,                   // default security attributes
             0,                      // use default stack size  
-            MyThreadFunction,       // thread function name
-            pDataArray[i],          // argument to thread function 
+            ComprandoThread,       // thread function name
+            clientes[i],          // argument to thread function 
             0,                      // use default creation flags 
-            &dwThreadIdArray[i]);   // returns the thread identifier 
+            &dwHilos[i]);   // returns the thread identifier 
 
-        if (hThreadArray[i] == NULL) 
+        if (hilos[i] == NULL) 
         {
            ExitProcess(3);
         }
     } 
 
-    WaitForMultipleObjects(MAX_THREADS, hThreadArray, TRUE, INFINITE);
+    WaitForMultipleObjects(N_CLIENTES, hilos, TRUE, INFINITE);
 //LIBERAMIENTO DE THREADS
-    for(int i=0; i<MAX_THREADS; i++)
+    for(int i=0; i< N_CLIENTES; i++)
     {
-        CloseHandle(hThreadArray[i]);
-        if(pDataArray[i] != NULL)
+        CloseHandle(hilos[i]);
+        if(clientes[i] != NULL)
         {
-            HeapFree(GetProcessHeap(), 0, pDataArray[i]);
-            pDataArray[i] = NULL;    // Ensure address is not reused.
+            HeapFree(GetProcessHeap(), 0, clientes[i]);
+            clientes[i] = NULL;    // Ensure address is not reused.
         }
     }
 	
@@ -100,5 +90,6 @@ DWORD WINAPI ComprandoThread( LPVOID lpParam ){
     //WriteConsole(hStdout, msgBuf, (DWORD)cchStringSize, &dwChars, NULL);
 
 	printf("termino el thread\n");
+	
 	return 0;
 }
