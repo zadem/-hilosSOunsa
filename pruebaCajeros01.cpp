@@ -15,6 +15,8 @@ using namespace std;
 #define YA_NO_HAY_CLIENTES -2
 #define N_CLIENTES 5
 
+CRITICAL_SECTION SeccionCritica;
+
 DWORD WINAPI ComprandoThread( LPVOID lpParam );
 DWORD WINAPI AtendiendoThread( LPVOID lpParam );
 int buscarSiguienteCliente();
@@ -31,6 +33,9 @@ typedef struct Cliente{
 Cliente **clientes;
 
 int _tmain(){
+	//iniciar seccion critica
+	InitializeCriticalSectionAndSpinCount(&SeccionCritica, 0x00000400);
+	
 	//semilla
 	srand(time(0)); 
 	
@@ -70,15 +75,16 @@ int _tmain(){
 
 //hilos cajas
 	HANDLE  hilosCaja[3]; 
-
+	DWORD   dwHilosCaja[3];
 	for(int i = 0 ; i < 3 ; i++){
+		int* argumento = (int*)(i + 1);
 		hilosCaja[i] = CreateThread( 
             NULL,                   // default security attributes
             0,                      // use default stack size  
             AtendiendoThread,       // thread function name
-            NULL,          // argument to thread function 
+            argumento,          // argument to thread function 
             0,                      // use default creation flags 
-            NULL);   // returns the thread identifier 
+            &dwHilosCaja[i]);   // returns the thread identifier 
 
         if (hilosCaja[i] == NULL) 
         {
@@ -130,7 +136,8 @@ DWORD WINAPI ComprandoThread(LPVOID lpParam ){
 }
 
 DWORD WINAPI AtendiendoThread(LPVOID lpParam ){
-	printf("caja creada\n");
+	int* nCaja = (int*)lpParam;
+	printf("caja %d creada\n", nCaja);
 	int indice;
 	
 	while((indice = buscarSiguienteCliente()) != YA_NO_HAY_CLIENTES){
@@ -143,13 +150,13 @@ DWORD WINAPI AtendiendoThread(LPVOID lpParam ){
 		
 		
 		printf("atendiendo al cliente : %d\n", indice);
-		
+	/*	
 		printf("%d incio el thread\n", 		cliente->id);
 	    printf("%d Id: %d\n", 				cliente->id, cliente->id);
 	    printf("%d Estado: %d\n", 			cliente->id, cliente->estado);
 	    printf("%d Tiempo Compra: %d\n",	cliente->id, cliente->tCompra);
 	    printf("%d Tiempo de atncion: %d\n",cliente->id, cliente->tAtencion);
-		
+	*/	
 		
 		while(cliente->tAtencion){
 			cliente->tAtencion--;
@@ -167,17 +174,20 @@ DWORD WINAPI AtendiendoThread(LPVOID lpParam ){
 }
 
 int buscarSiguienteCliente(){
+	EnterCriticalSection(&SeccionCritica);//entrar a seccion critica
 	int contador = 0;
 	for(int i = 0 ; i < N_CLIENTES ; i++){
 		
 		if(clientes[i]->estado == ESPERANDO_ATENCION){
 			clientes[i]->estado = ATENDIENDO;
+			LeaveCriticalSection(&SeccionCritica); //dejando seccion critica
 			return i;
 		}else if(clientes[i]->estado == ATENDIENDO || clientes[i]->estado == ATENDIDO){
-			
 			contador++;
 		}
 	}
+	
+	LeaveCriticalSection(&SeccionCritica); //dejando seccion critica
 	
 	if(contador == N_CLIENTES){
 		return YA_NO_HAY_CLIENTES;
