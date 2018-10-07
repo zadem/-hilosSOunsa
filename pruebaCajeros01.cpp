@@ -21,8 +21,6 @@ DWORD WINAPI ComprandoThread( LPVOID lpParam );
 DWORD WINAPI AtendiendoThread( LPVOID lpParam );
 int buscarSiguienteCliente();
 
-
-
 typedef struct Cliente{
 	int id;
 	int estado;
@@ -95,9 +93,6 @@ int _tmain(){
 
 
 
-
-
-
     WaitForMultipleObjects(N_CLIENTES, hilos, TRUE, INFINITE);
 //LIBERAMIENTO DE THREADS
     for(int i=0; i< N_CLIENTES; i++)
@@ -116,65 +111,44 @@ int _tmain(){
 DWORD WINAPI ComprandoThread(LPVOID lpParam ){
 	Cliente *cliente = (Cliente*) lpParam;
 	
-	/*
-	printf("%d incio el thread\n", 		cliente->id);
-    printf("%d Id: %d\n", 				cliente->id, cliente->id);
-    printf("%d Estado: %d\n", 			cliente->id, cliente->estado);
-    printf("%d Tiempo Compra: %d\n",	cliente->id, cliente->tCompra);
-    printf("%d Tiempo de atncion: %d\n",cliente->id, cliente->tAtencion);
-	
-	*/
+	printf("Cliente %d empezo su compra\n", cliente->id);
 	while(cliente->tCompra){
 		cliente->tCompra--;
-		//printf("%d TC: %d\n", cliente->id, cliente->tCompra);
 		Sleep(100);
 	}
-	printf("%d termino el thread\n", cliente->id);
-	
+	printf("Cliente %d termino su compra\n", cliente->id);
 	cliente->estado = ESPERANDO_ATENCION;
+	
 	return 0;
 }
 
 DWORD WINAPI AtendiendoThread(LPVOID lpParam ){
 	int* nCaja = (int*)lpParam;
-	printf("caja %d creada\n", nCaja);
+	printf("Caja %d creada\n", nCaja);
 	int indice;
 	
 	while((indice = buscarSiguienteCliente()) != YA_NO_HAY_CLIENTES){
-		//printf("indice _: %d\n", indice);
 		if(indice == CLIENTES_NO_LISTOS){
 			continue;
 		}
 		
 		Cliente* cliente = clientes[indice];
-		
-		
-		printf("atendiendo al cliente : %d\n", indice);
-	/*	
-		printf("%d incio el thread\n", 		cliente->id);
-	    printf("%d Id: %d\n", 				cliente->id, cliente->id);
-	    printf("%d Estado: %d\n", 			cliente->id, cliente->estado);
-	    printf("%d Tiempo Compra: %d\n",	cliente->id, cliente->tCompra);
-	    printf("%d Tiempo de atncion: %d\n",cliente->id, cliente->tAtencion);
-	*/	
-		
+		printf("Caja %d empezo a atender al cliente: %d\n", nCaja, cliente->id);
 		while(cliente->tAtencion){
 			cliente->tAtencion--;
-			//printf("%d TA: %d\n", cliente->id, cliente->tAtencion);
 			Sleep(100);
 		}
-		printf("%d termino el thread\n", cliente->id);
-		
 		cliente->estado = ATENDIDO;
-		
+		printf("Caja %d termino a atender al cliente: %d\n", nCaja, cliente->id);	
 	}
+	printf("Caja %d terminada, ya no hay clientes\n", nCaja);
 	
-	printf("caja terminada, ya no hay clientes\n");
 	return 0;
 }
 
 int buscarSiguienteCliente(){
 	EnterCriticalSection(&SeccionCritica);//entrar a seccion critica
+	
 	int contador = 0;
 	for(int i = 0 ; i < N_CLIENTES ; i++){
 		
@@ -186,13 +160,11 @@ int buscarSiguienteCliente(){
 			contador++;
 		}
 	}
-	
 	LeaveCriticalSection(&SeccionCritica); //dejando seccion critica
 	
 	if(contador == N_CLIENTES){
 		return YA_NO_HAY_CLIENTES;
 	}
-	
 	
 	return CLIENTES_NO_LISTOS;
 }
