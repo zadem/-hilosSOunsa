@@ -69,27 +69,21 @@ int _tmain(){
 }
 
 DWORD WINAPI ComprandoThread( LPVOID lpParam ){
-	printf("incio el thread\n");
+	Cliente *cliente = (Cliente*)lpParam;
 	
-	//    HANDLE hStdout;
-    Cliente *cliente;
-/*
-    TCHAR msgBuf[BUF_SIZE];
-    size_t cchStringSize;
-    DWORD dwChars;
-
-
-    hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-    if( hStdout == INVALID_HANDLE_VALUE )
-        return 1;
- */
-    cliente = (Cliente*)lpParam;
-
-    //StringCchPrintf(msgBuf, BUF_SIZE, TEXT("Parameters = %d, %d\n"), pDataArray->val1, pDataArray->val2); 
-    //StringCchLength(msgBuf, BUF_SIZE, &cchStringSize);
-    //WriteConsole(hStdout, msgBuf, (DWORD)cchStringSize, &dwChars, NULL);
-
-	printf("termino el thread\n");
 	
+	printf("%d incio el thread\n", cliente->id);
+    printf("%d Id: %d\n", cliente->id, cliente->id);
+    printf("%d Estado: %d\n", cliente->id, cliente->estado);
+    printf("%d Tiempo Compra: %d\n", cliente->id, cliente->tCompra);
+    printf("%d Tiempo de atencion: %d\n", cliente->id, cliente->tAtencion);
+	
+	
+	while(cliente->tCompra){
+		cliente->tCompra--;
+		printf("%d tiempo compra: %d\n", cliente->id, cliente->tCompra);
+		Sleep(100);
+	}
+	printf("%d termino el thread\n", cliente->id);
 	return 0;
 }
